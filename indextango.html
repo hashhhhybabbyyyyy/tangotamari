@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tango Tamari — Nikkei Cuisine · Juhu, Mumbai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@100;200;300;400;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal:       #1B6B60;
+    --teal-mid:   #2A8A7A;
+    --teal-light: #3DADA0;
+    --teal-pale:  #C8EBDC;
+    --teal-bg:    #EBF7F2;
+    --gold:       #C9943A;
+    --gold-light: #E8C06A;
+    --gold-pale:  #FBF0D8;
+    --white:      #FFFFFF;
+    --off:        #F8F5EE;
+    --ink:        #0F2620;
+    --ink-mid:    #1E3D30;
+    --muted:      #5A7A6A;
+    --border:     rgba(27,107,96,0.15);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--white);
+    color: var(--ink);
+    font-family: 'Josefin Sans', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CURSOR */
+  #cur {
+    width: 10px; height: 10px; background: var(--gold);
+    border-radius: 50%; position: fixed; z-index: 9999;
+    pointer-events: none; transform: translate(-50%,-50%);
+    transition: width .25s, height .25s, background .25s;
+  }
+  #cur-ring {
+    width: 34px; height: 34px;
+    border: 1.5px solid rgba(27,107,96,0.4); border-radius: 50%;
+    position: fixed; z-index: 9998; pointer-events: none;
+    transform: translate(-50%,-50%); transition: opacity .3s;
+  }
+  /* Slash canvas */
+  #slash-canvas { position:fixed; inset:0; z-index:9990; pointer-events:none; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.6rem 4.5rem;
+    transition: background .4s, box-shadow .4s, padding .4s;
+  }
+  nav.scrolled {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 1px 0 var(--border);
+    padding: 1rem 4.5rem;
+  }
+  .nav-logo { display:flex; align-items:center; gap:.85rem; text-decoration:none; cursor:none; }
+  .nav-logo svg { width:42px; height:42px; }
+  .nav-wm .wt { font-weight:700; font-size:.92rem; letter-spacing:.22em; text-transform:uppercase; color:var(--teal); display:block; }
+  .nav-wm .ws { font-size:.42rem; letter-spacing:.4em; text-transform:uppercase; color:var(--muted); display:block; margin-top:2px; }
+  .nav-links { display:flex; gap:2.5rem; list-style:none; }
+  .nav-links a { font-size:.58rem; letter-spacing:.25em; text-transform:uppercase; text-decoration:none; color:var(--muted); transition:color .3s; cursor:none; }
+  .nav-links a:hover { color:var(--teal); }
+  .btn-nav { font-size:.56rem; letter-spacing:.2em; text-transform:uppercase; padding:.6rem 1.5rem; background:var(--teal); color:white; text-decoration:none; cursor:none; border-radius:2px; font-weight:600; transition:all .3s; }
+  .btn-nav:hover { background:var(--teal-mid); transform:translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: stretch; overflow: hidden;
+  }
+  .hero-left {
+    background: var(--teal);
+    padding: 9rem 4.5rem 5rem;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    position: relative; overflow: hidden;
+  }
+  /* Blossom watermark */
+  .hero-blossom-bg {
+    position: absolute; bottom: -5%; right: -8%;
+    width: 70%; opacity: .06; pointer-events: none;
+    animation: slowSpin 80s linear infinite;
+  }
+  @keyframes slowSpin { from{transform:rotate(0deg);}to{transform:rotate(360deg);} }
+  /* Slash lines */
+  .hero-slash {
+    position: absolute; top: 38%; left: 0; right: 0;
+    height: 2px; background: linear-gradient(to right, transparent, rgba(255,255,255,.18), transparent);
+    animation: slashMove 4s ease-in-out infinite; opacity: 0;
+  }
+  .hero-slash2 { top: 42%; animation-delay: .6s; }
+  @keyframes slashMove {
+    0%{opacity:0;transform:translateX(-40px) rotate(-2deg);}
+    40%{opacity:1;}
+    100%{opacity:0;transform:translateX(60px) rotate(-2deg);}
+  }
+
+  .hero-eyebrow {
+    font-size:.54rem; letter-spacing:.5em; text-transform:uppercase;
+    color:rgba(255,255,255,.55); margin-bottom:1.5rem;
+    display:flex; align-items:center; gap:.8rem;
+    opacity:0; animation:fadeUp 1s .3s forwards;
+  }
+  .hero-eyebrow::before { content:''; width:20px; height:1px; background:var(--gold); flex-shrink:0; }
+  .hero-title {
+    font-weight:700; font-size:clamp(3.5rem,6.5vw,7rem);
+    letter-spacing:.04em; text-transform:uppercase; line-height:.92;
+    color:white; margin-bottom:2rem;
+    opacity:0; animation:fadeUp 1s .5s forwards;
+  }
+  .hero-title .gold { color:var(--gold-light); }
+  .hero-sub {
+    font-family:'Libre Baskerville',serif; font-style:italic;
+    font-size:clamp(.9rem,1.4vw,1.1rem); color:rgba(255,255,255,.7);
+    line-height:1.7; margin-bottom:2.5rem; max-width:380px;
+    opacity:0; animation:fadeUp 1s .7s forwards;
+  }
+  .hero-chips {
+    display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:3rem;
+    opacity:0; animation:fadeUp 1s .85s forwards;
+  }
+  .chip {
+    font-size:.5rem; letter-spacing:.2em; text-transform:uppercase;
+    padding:.35rem .85rem; border-radius:100px; font-weight:600;
+    background:rgba(255,255,255,.12); color:rgba(255,255,255,.85);
+    border:1px solid rgba(255,255,255,.2);
+  }
+  .chip-gold { background:rgba(201,148,58,.25); color:var(--gold-light); border-color:rgba(201,148,58,.35); }
+  .hero-cta { display:flex; gap:1rem; opacity:0; animation:fadeUp 1s 1s forwards; }
+  .btn-p { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; padding:.9rem 2rem; background:var(--gold); color:var(--ink); text-decoration:none; border-radius:2px; font-weight:700; transition:all .3s; cursor:none; }
+  .btn-p:hover { background:var(--gold-light); transform:translateY(-2px); }
+  .btn-g { font-size:.6rem; letter-spacing:.2em; text-transform:uppercase; padding:.9rem 2rem; border:1.5px solid rgba(255,255,255,.35); color:white; text-decoration:none; border-radius:2px; font-weight:600; transition:all .3s; cursor:none; }
+  .btn-g:hover { background:rgba(255,255,255,.12); }
+
+  /* Hero right — illustrated panel */
+  .hero-right {
+    background: var(--off);
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+  }
+  .hero-right-top {
+    flex: 1; padding: 9rem 3.5rem 2rem;
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative;
+  }
+  /* Large decorative circle */
+  .hero-circle-deco {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 340px; height: 340px; border-radius: 50%;
+    border: 1px solid rgba(27,107,96,.1);
+    pointer-events: none;
+  }
+  .hero-circle-deco::before {
+    content:''; position:absolute; inset:20px; border-radius:50%;
+    border: 1px dashed rgba(201,148,58,.2);
+    animation: slowSpin 30s linear infinite reverse;
+  }
+
+  /* Info cards stacked */
+  .hero-info-stack { position:relative; z-index:2; display:flex; flex-direction:column; gap:1.2rem; }
+  .hcard {
+    background:white; border-radius:6px; padding:1.4rem 1.8rem;
+    box-shadow:0 2px 12px rgba(0,0,0,.06);
+    border-left:3px solid var(--teal);
+    opacity:0; animation:fadeUp 1s forwards;
+  }
+  .hcard:nth-child(1){animation-delay:.6s;border-left-color:var(--teal);}
+  .hcard:nth-child(2){animation-delay:.75s;border-left-color:var(--gold);}
+  .hcard:nth-child(3){animation-delay:.9s;border-left-color:var(--teal-mid);}
+  .hcard-label { font-size:.48rem; letter-spacing:.35em; text-transform:uppercase; color:var(--muted); margin-bottom:.3rem; }
+  .hcard-value { font-size:.88rem; font-weight:600; color:var(--ink); letter-spacing:.03em; }
+  .hcard-sub { font-size:.72rem; color:var(--muted); margin-top:.15rem; }
+
+  /* Hours pill at bottom */
+  .hero-hours-row {
+    background:var(--teal); padding:1.5rem 3.5rem;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .hours-item { text-align:center; }
+  .hours-label { font-size:.45rem; letter-spacing:.35em; text-transform:uppercase; color:rgba(255,255,255,.55); display:block; margin-bottom:.25rem; }
+  .hours-val { font-family:'Libre Baskerville',serif; font-style:italic; font-size:.82rem; color:white; }
+  .hours-div { width:1px; height:30px; background:rgba(255,255,255,.2); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);} }
+
+  /* MARQUEE */
+  .marquee-bar { background:var(--gold); padding:.85rem 0; overflow:hidden; }
+  .marquee-track { display:flex; animation:marquee 22s linear infinite; width:max-content; }
+  .marquee-item { font-size:.56rem; letter-spacing:.35em; text-transform:uppercase; color:var(--ink); padding:0 2rem; display:flex; align-items:center; gap:1.5rem; white-space:nowrap; font-weight:600; }
+  .mdot { width:4px; height:4px; border-radius:50%; background:var(--teal); flex-shrink:0; }
+  @keyframes marquee { from{transform:translateX(0);}to{transform:translateX(-50%);} }
+
+  /* UTILS */
+  .slabel { font-size:.54rem; letter-spacing:.45em; text-transform:uppercase; color:var(--teal); display:inline-flex; align-items:center; gap:.7rem; margin-bottom:1.5rem; }
+  .slabel::before { content:''; width:18px; height:2px; background:var(--teal); border-radius:2px; flex-shrink:0; }
+  h2.stitle { font-weight:700; font-size:clamp(2rem,4vw,3.5rem); letter-spacing:.03em; text-transform:uppercase; line-height:1.05; color:var(--ink); }
+  h2.stitle .tw { color:var(--teal); }
+  h2.stitle .gw { color:var(--gold); }
+
+  /* STORY */
+  .story { display:grid; grid-template-columns:1fr 1fr; min-height:70vh; }
+  .story-left { background:var(--teal-bg); padding:8rem 4.5rem; display:flex; flex-direction:column; justify-content:center; }
+  .story-left p { font-family:'Libre Baskerville',serif; font-style:italic; font-size:clamp(.95rem,1.5vw,1.1rem); line-height:1.9; color:var(--muted); margin-top:1.8rem; max-width:420px; }
+  .story-left p+p { margin-top:1.2rem; }
+  .story-right { padding:8rem 4.5rem; background:white; display:flex; flex-direction:column; justify-content:center; }
+
+  /* Team cards */
+  .team-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-top:2rem; }
+  .team-card { background:var(--off); border-radius:4px; padding:2rem; position:relative; overflow:hidden; transition:all .3s; cursor:none; }
+  .team-card:hover { background:var(--teal-bg); transform:translateY(-3px); }
+  .team-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .team-card.c1::before { background:linear-gradient(to right, var(--teal), var(--teal-light)); }
+  .team-card.c2::before { background:linear-gradient(to right, var(--gold), var(--gold-light)); }
+  .team-card.c3::before { background:linear-gradient(to right, var(--teal-mid), var(--teal-light)); }
+  .team-card.c4::before { background:linear-gradient(to right, var(--gold-light), var(--gold)); }
+  .tc-role { font-size:.48rem; letter-spacing:.35em; text-transform:uppercase; color:var(--teal); margin-bottom:.5rem; }
+  .tc-name { font-weight:700; font-size:.95rem; letter-spacing:.06em; color:var(--ink); margin-bottom:.4rem; }
+  .tc-desc { font-size:.76rem; line-height:1.65; color:var(--muted); font-weight:300; }
+
+  /* AMBIANCE STRIP */
+  .ambiance { background:var(--ink); padding:5rem 4.5rem; display:grid; grid-template-columns:repeat(4,1fr); gap:0; }
+  .amb-item { padding:2.5rem; border-right:1px solid rgba(255,255,255,.06); display:flex; flex-direction:column; gap:.8rem; }
+  .amb-item:last-child { border-right:none; }
+  .amb-icon { font-size:1.8rem; }
+  .amb-title { font-size:.6rem; letter-spacing:.3em; text-transform:uppercase; color:var(--teal-light); font-weight:600; }
+  .amb-desc { font-size:.78rem; line-height:1.7; color:rgba(255,255,255,.4); font-weight:300; }
+
+  /* MENU */
+  .menu-section { background:var(--off); padding:8rem 4.5rem; position:relative; overflow:hidden; }
+  .menu-wm { position:absolute; right:-2%; top:50%; transform:translateY(-50%); font-weight:700; font-size:20vw; color:rgba(27,107,96,.04); pointer-events:none; user-select:none; letter-spacing:-.04em; }
+  .menu-top { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:3rem; flex-wrap:wrap; gap:1rem; }
+  .menu-meta { text-align:right; }
+  .menu-meta .cost { font-family:'Libre Baskerville',serif; font-style:italic; font-size:.9rem; color:var(--muted); line-height:1.8; }
+  .menu-meta .chef { font-size:.5rem; letter-spacing:.3em; text-transform:uppercase; color:var(--teal); margin-top:.3rem; }
+
+  /* Tabs */
+  .menu-tabs { display:flex; gap:.5rem; margin-bottom:3rem; flex-wrap:wrap; }
+  .mtab { font-size:.58rem; letter-spacing:.18em; text-transform:uppercase; padding:.6rem 1.4rem; border-radius:100px; border:1.5px solid var(--border); background:white; color:var(--muted); cursor:none; font-family:'Josefin Sans',sans-serif; font-weight:600; transition:all .3s; }
+  .mtab.active { background:var(--teal); color:white; border-color:var(--teal); }
+  .mtab:hover:not(.active) { border-color:var(--teal); color:var(--teal); }
+
+  .mpanel { display:none; }
+  .mpanel.active { display:grid; grid-template-columns:1fr 1fr; gap:1px; }
+
+  .mitem { background:white; padding:2rem 2.5rem; transition:background .3s; cursor:none; position:relative; overflow:hidden; }
+  .mitem:hover { background:var(--teal-bg); }
+  .mitem::after { content:''; position:absolute; top:0; left:0; width:3px; height:0; background:var(--teal); transition:height .4s ease; }
+  .mitem:hover::after { height:100%; }
+  .mitem-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.5rem; gap:1rem; }
+  .mitem-name { font-family:'Libre Baskerville',serif; font-style:italic; font-size:1rem; color:var(--ink); line-height:1.3; }
+  .mitem-price { font-size:.8rem; font-weight:700; color:var(--teal); flex-shrink:0; }
+  .mitem-desc { font-size:.76rem; line-height:1.72; color:var(--muted); font-weight:300; margin-bottom:.75rem; }
+  .mitem-tag { font-size:.46rem; letter-spacing:.2em; text-transform:uppercase; padding:3px 9px; border-radius:100px; font-weight:600; display:inline-block; }
+  .tt { background:rgba(27,107,96,.1); color:var(--teal); }
+  .tg { background:rgba(201,148,58,.12); color:var(--gold); }
+  .tr { background:rgba(200,60,60,.1); color:#B83030; }
+
+  /* COCKTAILS */
+  .cocktails { background:white; padding:8rem 4.5rem; }
+  .cock-inner { display:grid; grid-template-columns:1fr 1.3fr; gap:6rem; align-items:start; }
+  .cock-left {}
+  .cock-left p { font-family:'Libre Baskerville',serif; font-style:italic; font-size:1rem; line-height:1.9; color:var(--muted); margin-top:1.5rem; margin-bottom:2.5rem; }
+  /* Actual cocktail cards */
+  .cock-cards { display:flex; flex-direction:column; gap:.8rem; margin-top:1rem; }
+  .cock-card { display:flex; justify-content:space-between; align-items:flex-start; padding:1.4rem 1.8rem; background:var(--off); border-radius:4px; transition:all .3s; cursor:none; gap:1.5rem; }
+  .cock-card:hover { background:var(--teal-bg); }
+  .cc-left {}
+  .cc-name { font-weight:700; font-size:.85rem; color:var(--ink); letter-spacing:.04em; margin-bottom:.3rem; }
+  .cc-ingr { font-size:.72rem; color:var(--muted); font-weight:300; line-height:1.5; font-style:italic; }
+  .cc-price { font-size:.82rem; font-weight:700; color:var(--teal); flex-shrink:0; margin-top:.15rem; }
+
+  /* Mocktails aside */
+  .mock-note { margin-top:2.5rem; padding:1.5rem 2rem; background:var(--gold-pale); border-left:3px solid var(--gold); border-radius:0 4px 4px 0; }
+  .mock-note .mn-label { font-size:.48rem; letter-spacing:.35em; text-transform:uppercase; color:var(--gold); font-weight:600; margin-bottom:.4rem; }
+  .mock-note p { font-size:.78rem; line-height:1.65; color:var(--muted); font-weight:300; }
+
+  .cock-right {}
+  .seasonal-box { background:var(--teal); border-radius:6px; padding:2.5rem; margin-bottom:1.5rem; }
+  .seasonal-box .sb-label { font-size:.46rem; letter-spacing:.35em; text-transform:uppercase; color:rgba(255,255,255,.55); margin-bottom:1rem; display:block; }
+  .seasonal-box h3 { font-size:1.1rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:white; margin-bottom:.6rem; }
+  .seasonal-box p { font-size:.8rem; line-height:1.75; color:rgba(255,255,255,.65); font-weight:300; }
+  .seasonal-box .sb-feat { margin-top:1.5rem; display:flex; flex-direction:column; gap:.6rem; }
+  .sb-feat-item { font-size:.75rem; color:rgba(255,255,255,.75); padding:.5rem 0; border-bottom:1px solid rgba(255,255,255,.1); display:flex; align-items:center; gap:.8rem; }
+  .sb-feat-item::before { content:'—'; color:var(--gold-light); font-weight:700; flex-shrink:0; }
+  .unique-ingr { background:var(--off); border-radius:4px; padding:1.8rem; }
+  .unique-ingr .ui-label { font-size:.46rem; letter-spacing:.35em; text-transform:uppercase; color:var(--teal); margin-bottom:1rem; display:block; font-weight:600; }
+  .ingr-pills { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .ingr-pill { font-size:.52rem; letter-spacing:.1em; padding:.3rem .8rem; border-radius:100px; background:white; border:1px solid var(--border); color:var(--muted); }
+
+  /* SIGS */
+  .sigs { background:var(--teal-bg); padding:8rem 4.5rem; }
+  .sig-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:4rem; }
+  .sig-card { background:white; border-radius:6px; padding:2.5rem; position:relative; overflow:hidden; transition:all .35s; cursor:none; }
+  .sig-card:hover { box-shadow:0 16px 40px rgba(27,107,96,.12); transform:translateY(-4px); }
+  .sig-slash { position:absolute; top:0; right:0; width:50px; height:50px; overflow:hidden; }
+  .sig-slash::before { content:''; position:absolute; top:-20px; right:-20px; width:70px; height:70px; background:linear-gradient(135deg,transparent 50%,rgba(27,107,96,.08) 50%); }
+  .sig-num { font-size:2.2rem; font-weight:700; color:rgba(27,107,96,.08); line-height:1; margin-bottom:.4rem; }
+  .sig-name { font-family:'Libre Baskerville',serif; font-style:italic; font-size:1.1rem; color:var(--ink); margin-bottom:.7rem; line-height:1.3; }
+  .sig-desc { font-size:.78rem; line-height:1.75; color:var(--muted); font-weight:300; margin-bottom:1.2rem; }
+  .sig-tag { font-size:.46rem; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); background:rgba(27,107,96,.08); padding:3px 10px; border-radius:100px; font-weight:600; }
+
+  /* SPACE */
+  .space-section { display:grid; grid-template-columns:1fr 1fr; min-height:60vh; }
+  .space-info { background:var(--ink); padding:8rem 4.5rem; display:flex; flex-direction:column; justify-content:center; }
+  .space-info .slabel { color:var(--teal-light); }
+  .space-info .slabel::before { background:var(--teal-light); }
+  .space-info h2 { color:white; }
+  .space-info p { font-family:'Libre Baskerville',serif; font-style:italic; font-size:clamp(.9rem,1.4vw,1.05rem); line-height:1.9; color:rgba(255,255,255,.55); margin-top:1.8rem; max-width:400px; }
+  .space-stats { display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:3rem; }
+  .sp-stat { background:rgba(255,255,255,.04); padding:1.8rem; border:1px solid rgba(255,255,255,.06); }
+  .sp-stat-num { font-size:2.2rem; font-weight:700; color:var(--gold-light); line-height:1; display:block; }
+  .sp-stat-label { font-size:.5rem; letter-spacing:.3em; text-transform:uppercase; color:rgba(255,255,255,.35); display:block; margin-top:.4rem; }
+  .space-visual { background:var(--teal); display:flex; flex-direction:column; }
+  .space-seating { flex:1; padding:5rem 3.5rem; display:flex; flex-direction:column; justify-content:center; }
+  .seating-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-top:2rem; }
+  .seat-card { background:rgba(255,255,255,.1); border-radius:4px; padding:1.8rem; border:1px solid rgba(255,255,255,.12); }
+  .seat-icon { font-size:1.5rem; margin-bottom:.8rem; }
+  .seat-title { font-size:.58rem; letter-spacing:.25em; text-transform:uppercase; color:rgba(255,255,255,.9); font-weight:600; margin-bottom:.4rem; }
+  .seat-desc { font-size:.74rem; color:rgba(255,255,255,.55); line-height:1.6; font-weight:300; }
+
+  /* LOCATION */
+  .loc-section { display:grid; grid-template-columns:1fr 1fr; }
+  .loc-map { background:var(--teal-bg); position:relative; overflow:hidden; min-height:500px; display:flex; align-items:center; justify-content:center; }
+  .map-svg { position:absolute; inset:0; width:100%; height:100%; opacity:.15; }
+  .map-pin { position:absolute; display:flex; flex-direction:column; align-items:center; z-index:2; }
+  .map-dot { width:16px; height:16px; border-radius:50%; background:var(--teal); animation:pulse 2s ease infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 6px rgba(27,107,96,.2),0 0 0 14px rgba(27,107,96,.07);}50%{box-shadow:0 0 0 10px rgba(27,107,96,.15),0 0 0 22px rgba(27,107,96,.04);} }
+  .map-label { margin-top:.6rem; font-size:.55rem; letter-spacing:.22em; text-transform:uppercase; color:var(--teal); background:white; padding:4px 12px; border-radius:100px; white-space:nowrap; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+  .loc-info { background:white; padding:7rem 4.5rem; display:flex; flex-direction:column; justify-content:center; }
+  .loc-info h2 { font-weight:700; font-size:clamp(1.8rem,3vw,2.8rem); letter-spacing:.05em; text-transform:uppercase; color:var(--ink); }
+  .loc-addr { font-family:'Libre Baskerville',serif; font-style:italic; font-size:.9rem; color:var(--muted); margin:1rem 0 2.5rem; line-height:1.75; }
+  .info-rows { display:flex; flex-direction:column; }
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:1.2rem 0; border-bottom:1px solid var(--border); }
+  .info-row:first-child { border-top:1px solid var(--border); }
+  .info-rl { font-size:.52rem; letter-spacing:.3em; text-transform:uppercase; color:var(--teal); font-weight:600; }
+  .info-rv { font-family:'Libre Baskerville',serif; font-style:italic; font-size:.86rem; color:var(--ink); }
+  .loc-cta { margin-top:2.5rem; display:flex; gap:1rem; }
+  .btn-t { font-size:.58rem; letter-spacing:.2em; text-transform:uppercase; padding:.85rem 2rem; background:var(--teal); color:white; text-decoration:none; border-radius:2px; font-weight:600; transition:all .3s; cursor:none; }
+  .btn-t:hover { background:var(--teal-mid); transform:translateY(-2px); }
+  .btn-o { font-size:.58rem; letter-spacing:.2em; text-transform:uppercase; padding:.85rem 2rem; border:2px solid var(--teal); color:var(--teal); text-decoration:none; border-radius:2px; font-weight:600; transition:all .3s; cursor:none; }
+  .btn-o:hover { background:var(--teal); color:white; }
+
+  /* FOOTER */
+  footer { background:var(--ink); padding:5.5rem 4.5rem 2.5rem; }
+  .ft-top { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:4rem; margin-bottom:4rem; }
+  .ft-brand-name { font-weight:700; font-size:1rem; letter-spacing:.2em; text-transform:uppercase; color:var(--teal-light); }
+  .ft-brand-sub { font-size:.44rem; letter-spacing:.4em; text-transform:uppercase; color:rgba(255,255,255,.3); margin-top:2px; margin-bottom:1.2rem; display:block; }
+  .ft-brand p { font-size:.78rem; line-height:1.8; color:rgba(255,255,255,.3); font-weight:300; max-width:240px; }
+  .ft-col h4 { font-size:.5rem; letter-spacing:.35em; text-transform:uppercase; color:var(--teal-light); margin-bottom:1.5rem; }
+  .ft-col ul { list-style:none; }
+  .ft-col li { margin-bottom:.7rem; }
+  .ft-col a { font-size:.78rem; color:rgba(255,255,255,.35); text-decoration:none; transition:color .3s; cursor:none; font-weight:300; }
+  .ft-col a:hover { color:var(--teal-light); }
+  .ft-bot { border-top:1px solid rgba(255,255,255,.07); padding-top:2rem; display:flex; justify-content:space-between; align-items:center; }
+  .ft-bot p { font-size:.6rem; color:rgba(255,255,255,.2); letter-spacing:.1em; }
+  .social-row { display:flex; gap:1.5rem; }
+  .social-row a { font-size:.52rem; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.25); text-decoration:none; transition:color .3s; cursor:none; }
+  .social-row a:hover { color:var(--teal-light); }
+
+  /* REVEAL */
+  .reveal { opacity:0; transform:translateY(28px); transition:opacity .85s ease, transform .85s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+  .rd1{transition-delay:.1s;} .rd2{transition-delay:.2s;} .rd3{transition-delay:.32s;}
+
+  /* RESPONSIVE */
+  @media(max-width:1100px){
+    nav,nav.scrolled{padding:1.2rem 2rem;}
+    .hero{grid-template-columns:1fr;}
+    .hero-left{padding:8rem 2rem 4rem;}
+    .hero-right{display:none;}
+    .story{grid-template-columns:1fr;}
+    .space-section{grid-template-columns:1fr;}
+    .loc-section{grid-template-columns:1fr;}
+    .loc-map{min-height:300px;}
+    .menu-section,.cocktails,.sigs,.space-info,.loc-info{padding:6rem 2rem;}
+    .ambiance{grid-template-columns:1fr 1fr;}
+    .sig-grid{grid-template-columns:1fr 1fr;}
+    .cock-inner{grid-template-columns:1fr;gap:3rem;}
+    .ft-top{grid-template-columns:1fr 1fr;gap:2rem;}
+    footer{padding:4rem 2rem 2rem;}
+    .mpanel.active{grid-template-columns:1fr;}
+    .team-grid{grid-template-columns:1fr;}
+    .seating-grid{grid-template-columns:1fr;}
+    .space-stats{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="slash-canvas"></canvas>
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <svg viewBox="0 0 42 42" fill="none">
+      <circle cx="21" cy="21" r="20" fill="white" stroke="rgba(27,107,96,.2)" stroke-width="1"/>
+      <g transform="translate(21,21)">
+        <ellipse cx="0" cy="-8" rx="3.8" ry="6.5" fill="#1B6B60" transform="rotate(0)"/>
+        <ellipse cx="0" cy="-8" rx="3.8" ry="6.5" fill="#1B6B60" transform="rotate(72)"/>
+        <ellipse cx="0" cy="-8" rx="3.8" ry="6.5" fill="#1B6B60" transform="rotate(144)"/>
+        <ellipse cx="0" cy="-8" rx="3.8" ry="6.5" fill="#1B6B60" transform="rotate(216)"/>
+        <ellipse cx="0" cy="-8" rx="3.8" ry="6.5" fill="#1B6B60" transform="rotate(288)"/>
+        <circle cx="0" cy="0" r="3.2" fill="#C9943A"/>
+      </g>
+    </svg>
+    <div class="nav-wm">
+      <span class="wt">Tango Tamari</span>
+      <span class="ws">Nikkei Cuisine · Juhu, Mumbai</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#story">Story</a></li>
+    <li><a href="#menu">Menu</a></li>
+    <li><a href="#cocktails">Bar</a></li>
+    <li><a href="#space">Space</a></li>
+    <li><a href="#location">Visit</a></li>
+  </ul>
+  <a href="tel:+912226139999" class="btn-nav">Reserve a Table</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-left">
+    <svg class="hero-blossom-bg" viewBox="0 0 400 400" fill="none">
+      <g transform="translate(200,200)">
+        <ellipse cx="0" cy="-90" rx="44" ry="76" fill="white" transform="rotate(0)"/>
+        <ellipse cx="0" cy="-90" rx="44" ry="76" fill="white" transform="rotate(72)"/>
+        <ellipse cx="0" cy="-90" rx="44" ry="76" fill="white" transform="rotate(144)"/>
+        <ellipse cx="0" cy="-90" rx="44" ry="76" fill="white" transform="rotate(216)"/>
+        <ellipse cx="0" cy="-90" rx="44" ry="76" fill="white" transform="rotate(288)"/>
+        <circle cx="0" cy="0" r="32" fill="white"/>
+      </g>
+    </svg>
+    <div class="hero-slash"></div>
+    <div class="hero-slash hero-slash2"></div>
+    <p class="hero-eyebrow">Opened November 2023 · Hotel King's International · Juhu</p>
+    <h1 class="hero-title"><span class="gold">TANGO</span><br>TAMARI</h1>
+    <p class="hero-sub">Mumbai's destination for Nikkei cuisine — the art of Japanese-Peruvian fusion. Head Chef Mitesh Rangras brings over two decades of mastery to every plate.</p>
+    <div class="hero-chips">
+      <span class="chip">Japanese · Peruvian</span>
+      <span class="chip chip-gold">Head Chef: Mitesh Rangras</span>
+      <span class="chip">2,000 sq ft</span>
+      <span class="chip">Full Bar</span>
+      <span class="chip">Live Music</span>
+    </div>
+    <div class="hero-cta">
+      <a href="#menu" class="btn-p">Explore Menu</a>
+      <a href="#location" class="btn-g">Find Us</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-right-top">
+      <div class="hero-circle-deco"></div>
+      <div class="hero-info-stack">
+        <div class="hcard">
+          <div class="hcard-label">Head Chef</div>
+          <div class="hcard-value">Mitesh Rangras</div>
+          <div class="hcard-sub">20+ years of culinary expertise · Nikkei specialist</div>
+        </div>
+        <div class="hcard">
+          <div class="hcard-label">Founded By</div>
+          <div class="hcard-value">Sarabjit &amp; Rishan Keer</div>
+          <div class="hcard-sub">Also behind Alfredo's, The Butler &amp; Bayleaf</div>
+        </div>
+        <div class="hcard">
+          <div class="hcard-label">Rating &amp; Reviews</div>
+          <div class="hcard-value">4.6 ★ on Zomato</div>
+          <div class="hcard-sub">1,619+ reviews · ₹2,100 avg for two</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-hours-row">
+      <div class="hours-item">
+        <span class="hours-label">Lunch</span>
+        <span class="hours-val">1:00 PM – 3:00 PM</span>
+      </div>
+      <div class="hours-div"></div>
+      <div class="hours-item">
+        <span class="hours-label">Dinner</span>
+        <span class="hours-val">7:00 PM – 12:00 AM</span>
+      </div>
+      <div class="hours-div"></div>
+      <div class="hours-item">
+        <span class="hours-label">Days</span>
+        <span class="hours-val">Daily</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-bar">
+  <div class="marquee-track">
+    <div class="marquee-item">Nikkei Cuisine<span class="mdot"></span></div>
+    <div class="marquee-item">Head Chef Mitesh Rangras<span class="mdot"></span></div>
+    <div class="marquee-item">Smoked Aubergine Sushi<span class="mdot"></span></div>
+    <div class="marquee-item">Soft Shell Crab Salad<span class="mdot"></span></div>
+    <div class="marquee-item">Juhu Beach Roll<span class="mdot"></span></div>
+    <div class="marquee-item">Sling-A-Fling Cocktail<span class="mdot"></span></div>
+    <div class="marquee-item">Hora Del Pisco<span class="mdot"></span></div>
+    <div class="marquee-item">Lavender Crème Brûlée<span class="mdot"></span></div>
+    <div class="marquee-item">Mezzanine Dining<span class="mdot"></span></div>
+    <div class="marquee-item">Nikkei Cuisine<span class="mdot"></span></div>
+    <div class="marquee-item">Head Chef Mitesh Rangras<span class="mdot"></span></div>
+    <div class="marquee-item">Smoked Aubergine Sushi<span class="mdot"></span></div>
+    <div class="marquee-item">Soft Shell Crab Salad<span class="mdot"></span></div>
+    <div class="marquee-item">Juhu Beach Roll<span class="mdot"></span></div>
+    <div class="marquee-item">Sling-A-Fling Cocktail<span class="mdot"></span></div>
+    <div class="marquee-item">Hora Del Pisco<span class="mdot"></span></div>
+    <div class="marquee-item">Lavender Crème Brûlée<span class="mdot"></span></div>
+    <div class="marquee-item">Mezzanine Dining<span class="mdot"></span></div>
+  </div>
+</div>
+
+<!-- STORY -->
+<section class="story" id="story">
+  <div class="story-left">
+    <div class="slabel reveal">Our Story</div>
+    <h2 class="stitle reveal rd1">Where <span class="tw">Nikkei</span><br>Comes Home</h2>
+    <p class="reveal rd2">Nikkei is the story of Japanese immigrants who settled in Peru over a century ago, blending their culinary traditions with the bold, vivid flavours of Latin America to create one of the world's most celebrated fusion cuisines.</p>
+    <p class="reveal rd3">Tango Tamari brings that tradition to Juhu — crafted by Head Chef Mitesh Rangras and founded by Sarabjit and Rishan Keer, the minds behind iconic Mumbai institutions including Alfredo's, The Butler, and Bayleaf.</p>
+  </div>
+  <div class="story-right">
+    <div class="slabel reveal">The People Behind the Plate</div>
+    <h2 class="stitle reveal rd1" style="font-size:1.6rem;">Meet the team</h2>
+    <div class="team-grid">
+      <div class="team-card c1 reveal rd1">
+        <div class="tc-role">Head Chef</div>
+        <div class="tc-name">Mitesh Rangras</div>
+        <div class="tc-desc">20+ years of culinary mastery. Architect of the Tango Tamari menu — every dish a studied blend of Japanese technique and Peruvian boldness.</div>
+      </div>
+      <div class="team-card c2 reveal rd2">
+        <div class="tc-role">Founder</div>
+        <div class="tc-name">Sarabjit Keer</div>
+        <div class="tc-desc">Visionary behind Alfredo's, The Butler, and Bayleaf. Tango Tamari is the latest jewel in a long legacy of exceptional hospitality in Mumbai.</div>
+      </div>
+      <div class="team-card c3 reveal rd1">
+        <div class="tc-role">Co-Founder</div>
+        <div class="tc-name">Rishan Keer</div>
+        <div class="tc-desc">Bringing a new generation's energy to a family legacy — focused on creating dining experiences that resonate with Mumbai's evolving palate.</div>
+      </div>
+      <div class="team-card c4 reveal rd2">
+        <div class="tc-role">The Concept</div>
+        <div class="tc-name">Tango Tamari</div>
+        <div class="tc-desc">The name itself pays tribute to Nikkei cuisine. Opened November 2023, it has already captured Mumbai's culinary imagination.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AMBIANCE STRIP -->
+<div class="ambiance">
+  <div class="amb-item reveal">
+    <div class="amb-icon">🏛️</div>
+    <div class="amb-title">2,000 sq ft</div>
+    <div class="amb-desc">A generous, thoughtfully designed space spread across indoor, outdoor, and mezzanine areas.</div>
+  </div>
+  <div class="amb-item reveal rd1">
+    <div class="amb-icon">🌿</div>
+    <div class="amb-title">Bistro Ambiance</div>
+    <div class="amb-desc">Warm, welcoming, and lively. A bistro-style space that invites you to linger over great food and conversation.</div>
+  </div>
+  <div class="amb-item reveal rd2">
+    <div class="amb-icon">🎵</div>
+    <div class="amb-title">Live Music</div>
+    <div class="amb-desc">Curated performances that complement the multicultural energy of Nikkei cuisine perfectly.</div>
+  </div>
+  <div class="amb-item reveal rd3">
+    <div class="amb-icon">🚗</div>
+    <div class="amb-title">Valet Parking</div>
+    <div class="amb-desc">Complimentary valet service at Hotel King's International — your evening starts smoothly.</div>
+  </div>
+</div>
+
+<!-- MENU -->
+<section class="menu-section" id="menu">
+  <div class="menu-wm" aria-hidden="true">MENU</div>
+  <div class="menu-top">
+    <div>
+      <div class="slabel reveal">Crafted by Chef Mitesh Rangras</div>
+      <h2 class="stitle reveal rd1">The Menu</h2>
+    </div>
+    <div class="menu-meta reveal rd2">
+      <div class="cost">Cost for two — approx. ₹2,100<br>Alcohol: ₹2,800 avg for two</div>
+      <div class="chef">Farm-fresh ingredients · Seasonal updates</div>
+    </div>
+  </div>
+
+  <div class="menu-tabs reveal">
+    <button class="mtab active" onclick="switchTab(this,'s1')">Soups &amp; Salads</button>
+    <button class="mtab" onclick="switchTab(this,'s2')">Small Plates</button>
+    <button class="mtab" onclick="switchTab(this,'s3')">Sushi &amp; Mains</button>
+    <button class="mtab" onclick="switchTab(this,'s4')">Desserts</button>
+  </div>
+
+  <div class="mpanel active" id="s1">
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Moringa Soup</div></div><p class="mitem-desc">A light, nourishing bowl built around moringa — earthy, green, clean. A chef's favourite to open any meal.</p></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Truffe Miso Soup</div><span class="mitem-price">House Special</span></div><p class="mitem-desc">Miso broth elevated with black truffle. Japanese soul with a luxurious European whisper.</p><span class="mitem-tag tt">Chef's Pick</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Vietnamese Crab Meat Soup</div></div><p class="mitem-desc">Crisp celery and asparagus, a hint of chilli, perfectly cooked egg. A comforting, aromatic embrace.</p></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Soft Shell Crab Salad</div></div><p class="mitem-desc">Crispy whole soft shell crab with a citrus-forward dressing. Light, textural, and completely irresistible.</p><span class="mitem-tag tg">Signature</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Avo Crown Salad</div></div><p class="mitem-desc">Avocado at its finest — crowned and dressed with a careful hand. Clean, fresh, generous.</p></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Tropical Lush Salad</div></div><p class="mitem-desc">Grilled spicy pineapple, roquette, young coconut, water chestnut, blood orange and aji chilli dressing. A Peruvian garden on a plate.</p><span class="mitem-tag tt">Summer Fav</span></div>
+  </div>
+
+  <div class="mpanel" id="s2">
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Smoked Aubergine Sushi</div></div><p class="mitem-desc">Charcoal-smoked aubergine pressed into perfect sushi rice. Our most-talked-about vegetarian creation.</p><span class="mitem-tag tg">Most Iconic</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Crispy Tofu</div></div><p class="mitem-desc">Golden, crunchy outside — silky within. Sauced with care, served with precision.</p></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Jackfruit Carnitas Tacos</div></div><p class="mitem-desc">Slow-cooked jackfruit in the style of Peruvian carnitas, folded into tacos with bright accompaniments.</p><span class="mitem-tag tt">Vegetarian</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Tiger Prawns &amp; Chinese Greens</div></div><p class="mitem-desc">Jumbo tiger prawns wok-tossed with vibrant Chinese greens in spicy XO sauce. Bold and satisfying.</p><span class="mitem-tag tg">Chef's Pick</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Tango Tamari Chilli Chicken</div></div><p class="mitem-desc">The house take on chilli chicken — punchy, glazed, and built for sharing. Indo-Asian comfort with a Nikkei twist.</p><span class="mitem-tag tr">Crowd Fav</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Sticky Pork Ribs</div></div><p class="mitem-desc">Fall-off-the-bone ribs in a deep, sticky glaze. Rich and slow — the kind of dish that demands attention.</p></div>
+  </div>
+
+  <div class="mpanel" id="s3">
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Salmon Avo Rolls</div></div><p class="mitem-desc">Classic Nikkei sushi — fresh salmon, creamy avocado, clean rice. Beautifully executed, no embellishment needed.</p><span class="mitem-tag tt">Bestseller</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Juhu Beach Roll</div></div><p class="mitem-desc">Our signature maki — inspired by the neighbourhood. Ask your server for today's filling. Always a surprise worth having.</p><span class="mitem-tag tg">Exclusive</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Tango Maki</div></div><p class="mitem-desc">Soy sheet, asparagus, cucumber, avocado and cream cheese. Creamy, refreshing, and entirely its own thing.</p></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Shoyu Yaki Ramen</div></div><p class="mitem-desc">Soy-glazed, wok-fired ramen with depth and char. A Japanese staple with a Tango Tamari edge.</p><span class="mitem-tag tt">Chef's Pick</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Hot Stone Bibimbap</div></div><p class="mitem-desc">Served sizzling on a heated stone. Rice, vegetables, and egg — the Korean classic cooked with precision and joy.</p></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Steamed Snapper Fillet in Banana Leaf</div></div><p class="mitem-desc">Whole snapper steamed gently in banana leaf with aromatic herbs. Delicate, floral, impossibly fresh.</p><span class="mitem-tag tg">Premium</span></div>
+  </div>
+
+  <div class="mpanel" id="s4">
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Lavender &amp; Blueberry Crème Brûlée</div></div><p class="mitem-desc">House-infused lavender cream, blueberry compote, perfectly caramelised crust. The dessert Tango Tamari is known for.</p><span class="mitem-tag tg">Most Loved</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Nutella Bao Donut</div></div><p class="mitem-desc">Steamed bao meets Nutella in a dessert no one saw coming — and everyone orders again. Pillow-soft, deeply rich.</p><span class="mitem-tag tr">Bestseller</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Tender Coconut Panna Cotta</div></div><p class="mitem-desc">Silky panna cotta infused with fresh tender coconut. Tropical, light, and the perfect closer.</p></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Basque Nutella Cheesecake</div></div><p class="mitem-desc">Burnt Basque cheesecake with a Nutella core. Caramelised, creamy, deeply satisfying.</p><span class="mitem-tag tt">Seasonal</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Homemade Japanese Nama Chocolates</div></div><p class="mitem-desc">Silky-smooth Japanese-style raw chocolate. Melt-in-mouth, cocoa-dusted, served chilled. The perfect ending.</p><span class="mitem-tag tg">House Made</span></div>
+    <div class="mitem"><div class="mitem-top"><div class="mitem-name">Spicy Mushroom Yaki</div></div><p class="mitem-desc">Succulent mushrooms, crispy chilli, burrata foam. A savoury-sweet bridge between plates and dessert.</p></div>
+  </div>
+</section>
+
+<!-- SIGNATURE DISHES -->
+<section class="sigs" id="signatures">
+  <div class="slabel reveal">Not to be missed</div>
+  <h2 class="stitle reveal rd1">Signature <span class="tw">Dishes</span></h2>
+  <div class="sig-grid">
+    <div class="sig-card reveal rd1">
+      <div class="sig-slash"></div>
+      <div class="sig-num">01</div>
+      <div class="sig-name">Smoked Aubergine Sushi</div>
+      <p class="sig-desc">Charcoal-smoked aubergine on perfectly seasoned sushi rice. Simple, surprising, unforgettable — the dish that put Tango Tamari on the map.</p>
+      <span class="sig-tag">Vegetarian · Chef's Signature</span>
+    </div>
+    <div class="sig-card reveal rd2">
+      <div class="sig-slash"></div>
+      <div class="sig-num">02</div>
+      <div class="sig-name">Juhu Beach Roll</div>
+      <p class="sig-desc">A neighbourhood tribute in maki form. Our most exclusive roll — rotating seasonally, always worth asking about.</p>
+      <span class="sig-tag">House Exclusive</span>
+    </div>
+    <div class="sig-card reveal rd3">
+      <div class="sig-slash"></div>
+      <div class="sig-num">03</div>
+      <div class="sig-name">Lavender Crème Brûlée</div>
+      <p class="sig-desc">The dessert Tango Tamari is famous for. Floral, rich, with the satisfying crack of perfectly caramelised sugar.</p>
+      <span class="sig-tag">Dessert · Most Ordered</span>
+    </div>
+  </div>
+</section>
+
+<!-- COCKTAILS -->
+<section class="cocktails" id="cocktails">
+  <div class="cock-inner">
+    <div class="cock-left">
+      <div class="slabel reveal">The Bar</div>
+      <h2 class="stitle reveal rd1">Creative<br><span class="tw">Cocktails</span></h2>
+      <p class="reveal rd2">The bar at Tango Tamari is as inventive as the kitchen. Unique ingredients — seaweed, kombu, truffle oil, Thai chilies, tender coconut — redefine what a cocktail can be.</p>
+      <div class="cock-cards reveal rd2">
+        <div class="cock-card">
+          <div class="cc-left">
+            <div class="cc-name">Sling-A-Fling</div>
+            <div class="cc-ingr">Gin, triple orange, Amaro Montenegro, aromatic bitters, maraschino, pineapple</div>
+          </div>
+        </div>
+        <div class="cock-card">
+          <div class="cc-left">
+            <div class="cc-name">Pop-Star</div>
+            <div class="cc-ingr">Salted Caramel Wild Turkey Popcorn Bourbon, orange bitters, dark chocolate bark</div>
+          </div>
+        </div>
+        <div class="cock-card">
+          <div class="cc-left">
+            <div class="cc-name">Gi-Mo-Sabbi</div>
+            <div class="cc-ingr">Wasabi, gin, citrus mix, vegan foamer — for those who like it spicy</div>
+          </div>
+        </div>
+        <div class="cock-card">
+          <div class="cc-left">
+            <div class="cc-name">Hora Del Pisco</div>
+            <div class="cc-ingr">Pisco, pineapple, mint, lime, vegan foamer — tropical and bright</div>
+          </div>
+        </div>
+        <div class="cock-card">
+          <div class="cc-left">
+            <div class="cc-name">Red Lotus</div>
+            <div class="cc-ingr">Yuzu puree, lemongrass, rose tincture, hibiscus-infused vodka</div>
+          </div>
+        </div>
+      </div>
+      <div class="mock-note reveal rd3">
+        <div class="mn-label">Unique Bar Philosophy</div>
+        <p>Tango Tamari's mixologists use ingredients like seaweed, kombu, truffle oil, thai chilies and tender coconut — bringing the same Nikkei spirit of East-meets-West innovation to every glass.</p>
+      </div>
+    </div>
+    <div class="cock-right reveal rd2">
+      <div class="seasonal-box">
+        <span class="sb-label">Summer Menu Specials · Chef Mitesh Rangras</span>
+        <h3>Seasonal Cocktail Highlights</h3>
+        <p>Each season, Chef Mitesh introduces limited cocktails using the freshest available ingredients. Current favourites:</p>
+        <div class="sb-feat">
+          <div class="sb-feat-item">Red Lotus — yuzu, lemongrass, hibiscus vodka</div>
+          <div class="sb-feat-item">Seasonal lattes with house-made syrups</div>
+          <div class="sb-feat-item">Mocktails using fresh tropical fruits</div>
+          <div class="sb-feat-item">Zero-waste garnishes sourced locally</div>
+        </div>
+      </div>
+      <div class="unique-ingr">
+        <span class="ui-label">Unconventional Bar Ingredients</span>
+        <div class="ingr-pills">
+          <span class="ingr-pill">Seaweed</span>
+          <span class="ingr-pill">Kombu</span>
+          <span class="ingr-pill">Truffle Oil</span>
+          <span class="ingr-pill">Thai Chilies</span>
+          <span class="ingr-pill">Tender Coconut</span>
+          <span class="ingr-pill">Yuzu Puree</span>
+          <span class="ingr-pill">Lemongrass</span>
+          <span class="ingr-pill">Hibiscus</span>
+          <span class="ingr-pill">Wasabi</span>
+          <span class="ingr-pill">Vegan Foamer</span>
+          <span class="ingr-pill">Rose Tincture</span>
+          <span class="ingr-pill">Popcorn Bourbon</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPACE -->
+<section class="space-section" id="space">
+  <div class="space-info">
+    <div class="slabel reveal">The Space</div>
+    <h2 class="stitle reveal rd1" style="color:white;">Over <span style="color:var(--gold-light);">2,000</span><br>Square Feet</h2>
+    <p class="reveal rd2">Spread across a generous bistro-style space at Hotel King's International, Tango Tamari is designed for every kind of evening — from a casual lunch to an intimate mezzanine dinner or a large celebration with the full bar running.</p>
+    <div class="space-stats reveal rd3">
+      <div class="sp-stat"><span class="sp-stat-num">4.6★</span><span class="sp-stat-label">Zomato Rating</span></div>
+      <div class="sp-stat"><span class="sp-stat-num">1,619+</span><span class="sp-stat-label">Reviews</span></div>
+      <div class="sp-stat"><span class="sp-stat-num">2023</span><span class="sp-stat-label">Opened</span></div>
+      <div class="sp-stat"><span class="sp-stat-num">₹2,100</span><span class="sp-stat-label">Avg for Two</span></div>
+    </div>
+  </div>
+  <div class="space-visual">
+    <div class="space-seating">
+      <div class="slabel" style="color:rgba(255,255,255,.55);"><span style="background:rgba(255,255,255,.3)"></span>Seating Options</div>
+      <div class="seating-grid">
+        <div class="seat-card">
+          <div class="seat-icon">🪑</div>
+          <div class="seat-title">Indoor Seating</div>
+          <div class="seat-desc">Air-conditioned comfort with the full bistro atmosphere — ideal for any occasion, any season.</div>
+        </div>
+        <div class="seat-card">
+          <div class="seat-icon">🌿</div>
+          <div class="seat-title">Outdoor Seating</div>
+          <div class="seat-desc">Savour Mumbai's pleasant weather in a thoughtfully designed outdoor area. Best for breezy evenings.</div>
+        </div>
+        <div class="seat-card">
+          <div class="seat-icon">🕯️</div>
+          <div class="seat-title">Mezzanine Floor</div>
+          <div class="seat-desc">An enchanting upper level — ideal for intimate dinners, private gatherings and special occasions.</div>
+        </div>
+        <div class="seat-card">
+          <div class="seat-icon">🎉</div>
+          <div class="seat-title">Private Events</div>
+          <div class="seat-desc">The space can be configured for private dining, corporate events and celebrations. Contact us to plan.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOCATION -->
+<section class="loc-section" id="location">
+  <div class="loc-map">
+    <svg class="map-svg" viewBox="0 0 600 500" preserveAspectRatio="xMidYMid slice">
+      <defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0L0 0 0 40" fill="none" stroke="#1B6B60" stroke-width=".5"/></pattern></defs>
+      <rect width="600" height="500" fill="url(#g)"/>
+      <line x1="0" y1="250" x2="600" y2="250" stroke="#1B6B60" stroke-width="2.5" opacity=".6"/>
+      <line x1="300" y1="0" x2="300" y2="500" stroke="#1B6B60" stroke-width="2.5" opacity=".6"/>
+      <line x1="0" y1="140" x2="600" y2="140" stroke="#1B6B60" stroke-width="1" opacity=".25"/>
+      <line x1="0" y1="360" x2="600" y2="360" stroke="#1B6B60" stroke-width="1" opacity=".25"/>
+      <line x1="160" y1="0" x2="160" y2="500" stroke="#1B6B60" stroke-width="1" opacity=".25"/>
+      <line x1="440" y1="0" x2="440" y2="500" stroke="#1B6B60" stroke-width="1" opacity=".25"/>
+      <text x="310" y="244" font-family="Josefin Sans,sans-serif" font-size="7" fill="#1B6B60" opacity=".7" letter-spacing="2">JUHU TARA ROAD</text>
+      <text x="162" y="138" font-family="Josefin Sans,sans-serif" font-size="6" fill="#1B6B60" opacity=".5" letter-spacing="1.5">OPP. JUHU CHURCH</text>
+    </svg>
+    <div class="map-pin">
+      <div class="map-dot"></div>
+      <span class="map-label">Tango Tamari</span>
+    </div>
+  </div>
+  <div class="loc-info">
+    <div class="slabel reveal">Find Us</div>
+    <h2 class="reveal rd1">Juhu,<br>Mumbai</h2>
+    <p class="loc-addr reveal rd2">Hotel King's International (next to Alfredo's),<br>5, Juhu Tara Road, opp. Juhu Church,<br>Juhu, Mumbai — 400049</p>
+    <div class="info-rows reveal rd2">
+      <div class="info-row"><span class="info-rl">Lunch</span><span class="info-rv">1:00 PM — 3:00 PM</span></div>
+      <div class="info-row"><span class="info-rl">Dinner</span><span class="info-rv">7:00 PM — 12:00 AM</span></div>
+      <div class="info-row"><span class="info-rl">Days</span><span class="info-rv">Daily</span></div>
+      <div class="info-row"><span class="info-rl">Cost for Two</span><span class="info-rv">₹1,700 – ₹2,800</span></div>
+      <div class="info-row"><span class="info-rl">Zomato Rating</span><span class="info-rv">4.6 ★ (1,619+ reviews)</span></div>
+      <div class="info-row"><span class="info-rl">Parking</span><span class="info-rv">Valet at Hotel King's International</span></div>
+    </div>
+    <div class="loc-cta reveal rd3">
+      <a href="https://www.zomato.com/mumbai/tango-tamari-juhu" class="btn-t" target="_blank">View on Zomato</a>
+      <a href="https://maps.google.com/?q=Tango+Tamari+Juhu+Mumbai" class="btn-o" target="_blank">Get Directions</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-top">
+    <div class="ft-brand">
+      <div class="ft-brand-name">Tango Tamari</div>
+      <span class="ft-brand-sub">Nikkei Cuisine · Hotel King's International · Juhu</span>
+      <p>Japanese-Peruvian cuisine in the heart of Juhu. Head Chef Mitesh Rangras. Founded by Sarabjit &amp; Rishan Keer.</p>
+    </div>
+    <div class="ft-col">
+      <h4>Explore</h4>
+      <ul>
+        <li><a href="#story">Our Story</a></li>
+        <li><a href="#menu">Menu</a></li>
+        <li><a href="#cocktails">The Bar</a></li>
+        <li><a href="#space">The Space</a></li>
+        <li><a href="#location">Location</a></li>
+      </ul>
+    </div>
+    <div class="ft-col">
+      <h4>Visit</h4>
+      <ul>
+        <li><a href="#">Hotel King's International</a></li>
+        <li><a href="#">5, Juhu Tara Road, Juhu</a></li>
+        <li><a href="#">Next to Alfredo's</a></li>
+        <li><a href="#">Lunch: 1 PM – 3 PM</a></li>
+        <li><a href="#">Dinner: 7 PM – 12 AM</a></li>
+      </ul>
+    </div>
+    <div class="ft-col">
+      <h4>Connect</h4>
+      <ul>
+        <li><a href="https://www.instagram.com/tangotamarimumbai" target="_blank">@tangotamarimumbai</a></li>
+        <li><a href="https://www.zomato.com/mumbai/tango-tamari-juhu" target="_blank">Zomato</a></li>
+        <li><a href="https://www.kingsinternational.com/dining/tango-tamari.html" target="_blank">Hotel King's</a></li>
+        <li><a href="#">Private Events</a></li>
+        <li><a href="tel:+912226139999">Call to Reserve</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="ft-bot">
+    <p>© 2026 Tango Tamari · Hotel King's International · Juhu Tara Road, Mumbai · A Keer Hotels Pvt. Ltd. Property</p>
+    <div class="social-row">
+      <a href="https://www.instagram.com/tangotamarimumbai" target="_blank">Instagram</a>
+      <a href="https://www.zomato.com/mumbai/tango-tamari-juhu" target="_blank">Zomato</a>
+      <a href="https://magicpin.in/Mumbai/Juhu/Restaurant/Tango-Tamari/store/163ac23/" target="_blank">Magicpin</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // CURSOR
+  const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX;my=e.clientY;
+    cur.style.left=mx+'px';cur.style.top=my+'px';
+  });
+  (function lerpRing(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(lerpRing);})();
+  document.querySelectorAll('a,button,.mitem,.team-card,.sig-card,.cock-card,.seat-card,.sp-stat').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{cur.style.width='18px';cur.style.height='18px';cur.style.background='var(--teal)';ring.style.opacity='0';});
+    el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px';cur.style.background='var(--gold)';ring.style.opacity='1';});
+  });
+
+  // SLASH CANVAS — subtle trail
+  const canvas=document.getElementById('slash-canvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+  const pts=[];let lx=0,ly=0;
+  document.addEventListener('mousemove',e=>{
+    const dx=e.clientX-lx,dy=e.clientY-ly,spd=Math.sqrt(dx*dx+dy*dy);
+    if(spd>10) pts.push({x:e.clientX,y:e.clientY,ox:lx,oy:ly,life:1,spd});
+    lx=e.clientX;ly=e.clientY;
+  });
+  (function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let i=pts.length-1;i>=0;i--){
+      const p=pts[i];
+      ctx.beginPath();ctx.moveTo(p.ox,p.oy);ctx.lineTo(p.x,p.y);
+      const g=ctx.createLinearGradient(p.ox,p.oy,p.x,p.y);
+      g.addColorStop(0,'rgba(27,107,96,0)');
+      g.addColorStop(.5,`rgba(201,148,58,${p.life*.5})`);
+      g.addColorStop(1,'rgba(27,107,96,0)');
+      ctx.strokeStyle=g;ctx.lineWidth=1.5+p.spd*.02;ctx.lineCap='round';ctx.stroke();
+      p.life-=.05;if(p.life<=0)pts.splice(i,1);
+    }
+    requestAnimationFrame(draw);
+  })();
+
+  // NAV
+  const nav=document.getElementById('nav');
+  window.addEventListener('scroll',()=>nav.classList.toggle('scrolled',window.scrollY>60));
+
+  // REVEAL
+  const ro=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+
+  // MENU TABS
+  function switchTab(btn,id){
+    document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.mpanel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');document.getElementById(id).classList.add('active');
+  }
+</script>
+</body>
+</html>
